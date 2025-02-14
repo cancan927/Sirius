@@ -9,4 +9,17 @@ type Options struct {
 
 	//每次写入数据是否都持久化到磁盘
 	SyncWrites bool
+
+	// 索引类型
+	IndexType IndexType
 }
+
+type IndexType = int8
+
+const (
+	// Btree B树
+	Btree IndexType = iota + 1
+
+	// ART 自适应基数树
+	ART
+)
