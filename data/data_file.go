@@ -2,6 +2,8 @@ package data
 
 import "Sirius/fio"
 
+const DataFileSuffix = ".data"
+
 // DataFile 数据文件
 type DataFile struct {
 	FileId    uint32
@@ -30,8 +32,8 @@ func (f *DataFile) Write(data []byte) error {
 	panic("not implemented")
 }
 
-// Read 从文件中读取数据
-func (f *DataFile) Read(offset int64) (*LogRecord, error) {
+// ReadLogRecord 从文件中读取日志记录,返回日志记录以及下一个记录的偏移
+func (f *DataFile) ReadLogRecord(offset int64) (*LogRecord, int64, error) {
 	//TODO
 
 	panic("not implemented")
