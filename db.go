@@ -66,14 +66,14 @@ func (db *DB) Put(key []byte, value []byte) error {
 	}
 
 	// 构造logRecord结构体
-	log_record := &data.LogRecord{
+	logRecord := &data.LogRecord{
 		Key:   key,
 		Value: value,
 		Type:  data.LogRecordNormal,
 	}
 
 	// 将logRecord追加写入到文件中
-	pos, err := db.appendLogRecord(log_record)
+	pos, err := db.appendLogRecord(logRecord)
 	if err != nil {
 		return err
 	}
@@ -126,6 +126,38 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	}
 
 	return record.Value, nil
+}
+
+// Delete 从数据库中删除指定key的数据
+func (db *DB) Delete(key []byte) error {
+	// 判断key的有效性
+	if len(key) == 0 {
+		return ErrKeyIsEmpty
+	}
+	// 先检查key是否存在，如果不存在，直接返回
+	if db.index.Get(key) == nil {
+		return nil
+	}
+
+	// 有效的key，我们将key对应的type设置为删除
+	logRecord := &data.LogRecord{
+		Key:  key,
+		Type: data.LogRecordDeleted,
+	}
+
+	// 写入磁盘数据文件
+	_, err := db.appendLogRecord(logRecord)
+	if err != nil {
+		return nil
+	}
+
+	// 更新内存索引
+	ok := db.index.Delete(key)
+	if !ok {
+		return ErrIndexUpdateFailed
+	}
+
+	return nil
 }
 
 // appendLogRecord 将logRecord追加写入到活跃文件中
@@ -287,14 +319,16 @@ func (db *DB) loadIndexFromDataFiles() error {
 
 			// 构建内存索引并保存
 			logRecordPos := &data.LogRecordPos{Fid: fileId, Offset: offset}
-
+			var ok bool
 			// 如果是已经被删除的数据，则从内存索引中删除
 			if record.Type == data.LogRecordDeleted {
-				db.index.Delete(record.Key)
+				ok = db.index.Delete(record.Key)
 			} else {
-				db.index.Put(record.Key, logRecordPos)
+				ok = db.index.Put(record.Key, logRecordPos)
 			}
-
+			if !ok {
+				return ErrIndexUpdateFailed
+			}
 			// 更新offset，下一次从新的位置读取
 			offset += size
 
