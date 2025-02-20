@@ -252,7 +252,7 @@ func (db *DB) loadDataFiles() error {
 	var fileIds []int
 	// 遍历目录下的文件，找到所有以.data结尾的文件
 	for _, entry := range dirEntries {
-		if strings.HasSuffix(entry.Name(), data.DataFileSuffix) {
+		if strings.HasSuffix(entry.Name(), data.DataFileNameSuffix) {
 			// 00001.data 用.分割后,第一个元素就是文件id
 			splitNames := strings.Split(entry.Name(), ".")
 			fileId, err := strconv.Atoi(splitNames[0])
@@ -331,7 +331,6 @@ func (db *DB) loadIndexFromDataFiles() error {
 			}
 			// 更新offset，下一次从新的位置读取
 			offset += size
-
 		}
 
 		// 如果是当前活跃文件，则更新这个文件的WriteOff
