@@ -35,7 +35,6 @@ func Open(options Options) (*DB, error) {
 			return nil, err2
 		}
 	}
-	//初始化DB实例
 
 	// 初始化DB实例
 	db := &DB{
