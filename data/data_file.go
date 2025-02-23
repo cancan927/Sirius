@@ -69,7 +69,9 @@ func (f *DataFile) Write(data []byte) error {
 // ReadLogRecord 从文件中读取日志记录,返回日志记录以及下一个记录的偏移
 // 根据offset读取指定位置的logRecord,返回logRecord，此logRecord的长度，如果有error，返回error
 func (f *DataFile) ReadLogRecord(offset int64) (*LogRecord, int64, error) {
+	// +---------+----------+---------+-----------+-----+-------+
 	// | CRC(4B) | Type(1B) | KeySize | ValueSize | Key | Value |
+	// +---------+----------+---------+-----------+-----+-------+
 	// LogRecord的结构我们可以分为两个部分
 	// 1. 头部信息，存储了元数据信息，例如crc校验值，type类型，key的大小，value的大小
 	// 2. 数据部分，存储了key和value的具体内容
