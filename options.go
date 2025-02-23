@@ -1,5 +1,7 @@
 package sirius
 
+import "os"
+
 type Options struct {
 	// 数据库数据目录
 	DirPath string
@@ -23,3 +25,10 @@ const (
 	// ART 自适应基数树
 	ART
 )
+
+var DefaultOptions = Options{
+	DirPath:      os.TempDir(),
+	DataFileSize: 256 * 1024 * 1024,
+	SyncWrites:   false,
+	IndexType:    Btree,
+}
