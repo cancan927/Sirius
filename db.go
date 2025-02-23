@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// DB bitcask存储引擎实例
+// DB 存储引擎实例
 type DB struct {
 	options    Options
 	lock       *sync.RWMutex
@@ -21,7 +21,7 @@ type DB struct {
 	fileIds    []int                     //只在加载索引时使用
 }
 
-// Open 打开一个bitcask存储引擎实例
+// Open 打开一个存储引擎实例
 func Open(options Options) (*DB, error) {
 	// 对用户传入的配置项进行校验
 	if err := checkOptions(options); err != nil {

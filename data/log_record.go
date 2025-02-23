@@ -36,7 +36,7 @@ type logRecordHeader struct {
 	crc        uint32        // crc校验值
 	recordType LogRecordType // 记录类型
 	keySize    uint32        // key大小,变长编码，最大5字节
-	valueSize  uint32        // value大小，变长编码，最大5字节
+	valueSize  uint32        // value大小，变长编码，最大5字节，
 }
 
 // EncodeLogRecord 编码LogRecord,返回字节数组以及长度
