@@ -75,7 +75,6 @@ func TestOpenDataFile(t *testing.T) {
 
 }
 
-// 测试数据文件写入,这里的测试用例依赖关系，需要从上往下执行，因为后面的测试用例依赖前面的测试用例
 func TestDataFile_Write(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -253,4 +252,158 @@ func TestDataFile_Sync(t *testing.T) {
 			tc.after(t)
 		})
 	}
+}
+
+func TestDataFile_ReadLogRecord(t *testing.T) {
+	testCases := []struct {
+		name string
+
+		before func(t *testing.T)
+		after  func(t *testing.T)
+
+		offset int64
+
+		wantRecord *LogRecord
+		wantSize   int64
+		wantErr    error
+	}{
+		{
+			name: "从0位置开始读取",
+
+			before: func(t *testing.T) {
+				// 创建文件
+				fileName := filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix)
+				fd, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+				assert.Nil(t, err)
+				// 构造logRecord
+				record := &LogRecord{
+					Key:   []byte("hello"),
+					Value: []byte("world"),
+					Type:  LogRecordNormal,
+				}
+				encodeLogRecord, size := EncodeLogRecord(record)
+				assert.NotNil(t, encodeLogRecord)
+				assert.Equal(t, size, int64(17))
+				// 写入数据
+				length, err := fd.Write(encodeLogRecord)
+				assert.Equal(t, 17, length)
+				assert.Nil(t, err)
+				err = fd.Close()
+				assert.Nil(t, err)
+
+			},
+			after: func(t *testing.T) {
+				// 删除测试文件
+				err := os.Remove(filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix))
+				assert.Nil(t, err)
+
+			},
+			offset: 0,
+			wantRecord: &LogRecord{
+				Key:   []byte("hello"),
+				Value: []byte("world"),
+				Type:  LogRecordNormal,
+			},
+			wantErr:  nil,
+			wantSize: 4 + 1 + 1 + 1 + 5 + 5,
+		},
+		{
+			name: "从给定位置读取",
+			before: func(t *testing.T) {
+				// 创建文件
+				fileName := filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix)
+				fd, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+				assert.Nil(t, err)
+				// 构造logRecord
+				record := &LogRecord{
+					Key:   []byte("hello"),
+					Value: []byte("world"),
+					Type:  LogRecordNormal,
+				}
+				encodeLogRecord, size := EncodeLogRecord(record)
+				assert.NotNil(t, encodeLogRecord)
+				assert.Equal(t, size, int64(17))
+
+				// 先写入10字节无效数据
+				write, err := fd.Write([]byte("0123456789"))
+				assert.Nil(t, err)
+				assert.Equal(t, 10, write)
+
+				// 写入数据
+				length, err := fd.Write(encodeLogRecord)
+				assert.Equal(t, 17, length)
+				assert.Nil(t, err)
+				err = fd.Close()
+				assert.Nil(t, err)
+			},
+			after: func(t *testing.T) {
+				// 删除测试文件
+				err := os.Remove(filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix))
+				assert.Nil(t, err)
+			},
+			offset: 10,
+			wantRecord: &LogRecord{
+				Key:   []byte("hello"),
+				Value: []byte("world"),
+				Type:  LogRecordNormal,
+			},
+			wantSize: 17,
+			wantErr:  nil,
+		},
+		{
+			name: "被删除的文件",
+
+			before: func(t *testing.T) {
+				// 创建文件
+				fileName := filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix)
+				fd, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+				assert.Nil(t, err)
+				// 构造logRecord
+				record := &LogRecord{
+					Key:   []byte("hello"),
+					Value: []byte("world"),
+					Type:  LogRecordDeleted,
+				}
+				encodeLogRecord, size := EncodeLogRecord(record)
+				assert.NotNil(t, encodeLogRecord)
+				assert.Equal(t, size, int64(17))
+				// 写入数据
+				length, err := fd.Write(encodeLogRecord)
+				assert.Equal(t, 17, length)
+				assert.Nil(t, err)
+				err = fd.Close()
+				assert.Nil(t, err)
+
+			},
+			after: func(t *testing.T) {
+				// 删除测试文件
+				err := os.Remove(filepath.Join(os.TempDir(), fmt.Sprintf("%09d", 0)+DataFileNameSuffix))
+				assert.Nil(t, err)
+
+			},
+			offset: 0,
+			wantRecord: &LogRecord{
+				Key:   []byte("hello"),
+				Value: []byte("world"),
+				Type:  LogRecordDeleted,
+			},
+			wantErr:  nil,
+			wantSize: 4 + 1 + 1 + 1 + 5 + 5,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.before(t)
+			file, err := OpenDataFile(os.TempDir(), 0)
+			assert.Nil(t, err)
+			record, size, err := file.ReadLogRecord(tc.offset)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.wantSize, size)
+			assert.Equal(t, tc.wantRecord, record)
+			tc.after(t)
+		})
+
+	}
+
 }
