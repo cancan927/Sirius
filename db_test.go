@@ -39,7 +39,8 @@ func TestOpen(t *testing.T) {
 				index: index.NewIndexer(Btree),
 			},
 			wantErr: nil,
-		}, {
+		},
+		{
 			name:   "用户未指定配置，使用默认配置",
 			option: DefaultOptions,
 			wantDB: &DB{
@@ -93,7 +94,8 @@ func TestDB_Put(t *testing.T) {
 			key:     []byte("hello"),
 			value:   []byte("sirius"),
 			wantErr: nil,
-		}, {
+		},
+		{
 			name: "重复Put key相同的数据",
 			before: func(t *testing.T) {
 				// 提前Put一条key相同的数据
@@ -125,14 +127,16 @@ func TestDB_Put(t *testing.T) {
 			key:     []byte("hello"),
 			value:   []byte("world"),
 			wantErr: nil,
-		}, {
+		},
+		{
 			name:    "key为空",
 			before:  func(t *testing.T) {},
 			after:   func(t *testing.T) {},
 			key:     []byte(""),
 			value:   []byte("world"),
 			wantErr: ErrKeyIsEmpty,
-		}, {
+		},
+		{
 			name:   "value为空",
 			before: func(t *testing.T) {},
 			after: func(t *testing.T) {
@@ -149,7 +153,8 @@ func TestDB_Put(t *testing.T) {
 			key:     []byte("hello"),
 			value:   []byte(""),
 			wantErr: nil,
-		}, {
+		},
+		{
 			name: "写到了数据文件进行了转换",
 			before: func(t *testing.T) {
 				// 把数据文件写满
@@ -179,7 +184,8 @@ func TestDB_Put(t *testing.T) {
 			key:     []byte("hello"),
 			value:   []byte("world"),
 			wantErr: nil,
-		}, {
+		},
+		{
 			name: "重启之后再进行Put",
 			before: func(t *testing.T) {
 				// 这里使用db.activeFile.Close()模拟关闭数据库
